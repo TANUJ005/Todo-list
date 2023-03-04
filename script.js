@@ -1,55 +1,67 @@
-let tasks = [];
+(function (){
+    let tasks = [];
 const taskList = document.getElementById('list');
 const addTaskInput = document.getElementById('add');
 const tasksCounter = document.getElementById('tasks-counter');
 
 console.log("script working")
-function addTaskToDom(task){
+function fetchData() {
+    fetch('https://jsonplaceholder.typicode.com/todos')
+        .then((Response) => {
+            console.log(Response);
+            return Response.json()
+        }).then((data) => {
+            tasks = data.slice(0,10);
+            renderList();
+        })
+}
+function addTaskToDom(task) {
     const li = document.createElement('li');
 
     li.innerHTML = `
-        
-            <input type="checkbox" id="${task.id}" ${task.done ? 'checked' : ''}" >  
-            <label for="${task.id}">${task.text}</label>
-          
+            <input class="custom-checkbox" type="checkbox" id="${task.id}" ${task.completed ? 'checked' : ''}"  >  
+            <label for="${task.id}" class="label">${task.title}</label>
+            <img src="https://cdn.onlinewebfonts.com/svg/img_422309.png" alt="del-icon" height="15px" width="15px" class="del-icon" data-id="${task.id}">
     `;
     taskList.append(li);
 }
 function renderList() {
     taskList.innerHTML = '';
-    for(let i=0; i<tasks.length;i++){
+    for (let i = 0; i < tasks.length; i++) {
         addTaskToDom(tasks[i]);
     }
- }
+}
 
 function toggleTask(taskId) {
     const task = tasks.filter(function (task) {
-        return task.id == taskId;
+        return task.id == Number(taskId);
     })
 
-    if(task.length > 0 ){
+    if (task.length > 0) {
         const currentTask = task[0];
-        currentTask.done = !currentTask.done;
+        currentTask.completed = !currentTask.completed;
         renderList();
         showNotification('Task toggled succesfully');
     }
 
-    showNotification('Couldnt toggle the task');
- }
+    else {
+        showNotification('Couldnt toggle the task');
+    }
+}
 
-function deleteTask(taskId) { 
+function deleteTask(taskId) {
     count--;
     document.getElementById('tasks-counter').innerHTML = count;
     const newTasks = tasks.filter(function (task) {
-        return task.id !== taskId
+        return task.id !== Number(taskId);
     })
     tasks = newTasks;
     renderList();
     showNotification('Task deleted successfully');
 }
 
-var count =0;
-function addTask(task) { 
+var count = 10;
+function addTask(task) {
     count++;
     document.getElementById('tasks-counter').innerHTML = count;
     tasks.push(task);
@@ -67,16 +79,16 @@ function handleKeyInputPress(e) {
 
     if (e.key == 'Enter') {
         const text = e.target.value;
-        
+
 
         if (!text) {
             showNotification(text);
             return;
         }
         const task = {
-            text: text,
+            title: text,
             id: Date.now().toString(),
-            done: false
+            completed: false
 
         }
 
@@ -88,12 +100,22 @@ function handleKeyInputPress(e) {
 }
 function handleClickListener(e) {
     const target = e.target;
-    console.log(target);
+    if (target.className == 'del-icon') {
+        const taskId = target.dataset.id;
+        deleteTask(taskId);
+    } else if (target.className == 'custom-checkbox') {
+        const taskId = target.id;
+        toggleTask(taskId);
+    }
 
 }
+function startingApp() {
+    fetchData();
+    addTaskInput.addEventListener('keyup', handleKeyInputPress);
+    tasksCounter.innerHTML = count;
+    document.addEventListener('click', handleClickListener)
+}
+startingApp();
 
-addTaskInput.addEventListener('keyup', handleKeyInputPress);
-
-document.addEventListener('click' , handleClickListener)
-
+})()
 
